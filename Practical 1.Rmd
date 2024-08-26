@@ -1,0 +1,148 @@
+---
+title: "Practical 1:An Introduction to R"
+author: "Burhanudin Badiuzaman"
+date: "2024-08-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+In my study we'll following practicals will use the London Borough of Camden as their case study area.
+
+In this tutorial we will:
+
+<a id='0'></a>
+
+- [x]  Download a Census data pack from the CDRC Data website
+
+- [x]  Load the data into R using RStudio
+
+- [x]  View the raw data in R
+
+- [x]  Subset data in R
+
+- [x]  Merge data in R
+
+Our first step is to set the working directory. This is so R knows where to open and save files to. It is recommended that you set the working directory to an appropriate space in your computers work space.
+
+```{r}
+getwd()
+```
+
+## Set the working directory
+
+```{r}
+setwd("/Users/burhanudin/Study_burhanudin_6/Spatial Data Analysis and Visualisation in R/Project 1")
+```
+
+Our next steps are to load the data into R.
+
+
+## Loading data and data formatting in R
+
+We can read CSVs into R using the read.csv() function as demonstrated below. This requires us to identify the file location within our workspace, and also assign an object name for our data in R.
+
+![Different census dataset](images/Screen Shot 2024-08-26 at 10.24.28.png)
+
+# loads a csv, remember to correctly input the file location within your working directory
+
+```{r}
+Ethnicity <- read.csv("data/tables/KS201EW_oa11.csv",header=TRUE, stringsAsFactors=FALSE)
+Rooms <- read.csv("data/tables/KS403EW_oa11.csv", header=TRUE, stringsAsFactors=FALSE)
+Qualifications <- read.csv("data/tables/KS501EW_oa11.csv",header=TRUE, stringsAsFactors=FALSE)
+Employment <- read.csv("data/tables/KS601EW_oa11.csv",header=TRUE, stringsAsFactors=FALSE)
+```
+
+
+## Viewing data
+With the data now loaded into RStudio, they can be observed in the objects window. Alternatively, you can open them with the View function as demonstrated below.
+
+```{r}
+# to view the top 6 cases of a data frame
+head(Employment)
+```
+
+## Observing column names
+To observe the column names for each dataset we can use a simple names() function. It is also possible to work out their order in the columns from observing the results of this function.
+
+```{r}
+# view column names of a dataframe
+names(Employment)
+```
+From using the variables_description csv from our data pack, we know the Economically active: Unemployed percentage variable is recorded as KS601EW0019. This is the 19th column in the Employment dataset.
+
+We will cover more data exploration techniques in the forthcoming practical.
+
+## Selecting columns
+Next, we will create new data objects which only include the columns we require. The new data objects will be given the same name as the original data, therefore overriding the bigger file in R. Using the variable_description csv to lookp the codes, we have isolated only the columns we are interested in. Remember we are downloading percentages, not raw counts.
+
+```{r}
+# selecting specific columns only
+# note this action overwrites the labels you made for the original data, 
+# so if you make a mistake you will need to reload the data into R
+
+Ethnicity <- Ethnicity[, c(1, 21)]
+Rooms <- Rooms[, c(1, 13)]
+Employment <- Employment[, c(1, 20)]
+Qualifications <- Qualifications[, c(1, 20)]
+```
+
+
+
+## Renaming column headers
+Next we want to change the names of the codes to ease our interpretation. We can do this using the names().
+
+If we wanted to change an individual column name we could follow the approach detailed below. In this example, we tell R that we are interested in setting to the name Unemployed to the 2nd column header in the data.
+
+```{r}
+# to change an individual column name
+names(Employment)[2] <- "Unemployed"
+```
+
+However, we want to name both column headers in all of our data. To do this we can enter the following code. The c() function allows us to concatenate multiple values within one command.
+
+```{r}
+# to change both column names
+names(Ethnicity)<- c("OA", "White_British")
+names(Rooms)<- c("OA", "Low_Occupancy")
+names(Employment)<- c("OA", "Unemployed")
+names(Qualifications)<- c("OA", "Qualification")
+```
+
+
+
+## Joining data in R
+We next want to combine the data into a single dataset. Joining two data frames together requires a common field, or column, between them. In this case, it is the OA field. In this field each OA has a unique ID (or OA name), this IDs can be used to identify each OA between each of the datasets. In R the merge() function joins two datasets together and creates a new object. As we are seeking to join four datasets we need to undertake multiple steps as follows.
+
+```{r}
+#1 Merge Ethnicity and Rooms to create a new object called "merged_data_1"
+merged_data_1 <- merge(Ethnicity, Rooms, by="OA")
+
+#2 Merge the "merged_data_1" object with Employment to create a new merged data object
+merged_data_2 <- merge(merged_data_1, Employment, by="OA")
+
+#3 Merge the "merged_data_2" object with Qualifications to create a new data object
+Census.Data <- merge(merged_data_2, Qualifications, by="OA")
+
+#4 Remove the "merged_data" objects as we won't need them anymore
+rm(merged_data_1, merged_data_2)
+```
+
+Our newly formed Census.Data object contains all four variables.
+
+## Exporting Data
+You can now save this file to your workspace folder. We will use this data in the forthcoming practicals. Here we are using the write.csv() function. We have told the function not to print off the row names (the numbers on the left of the data) as we won’t need them. We will save the data as practical_data.csv to our working directory. Remember R is case sensitive so take note of when object names are capitalised.
+
+```{r}
+
+# Writes the data to a csv named "practical_data" in your file directory
+write.csv(Census.Data, "practical_data.csv", row.names=F)
+```
